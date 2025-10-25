@@ -15,7 +15,7 @@ It listens, speaks, and saves conversation transcripts — just like a real rece
 ---
 
 ## 🧩 Project Structure
-\`\`\`
+```
 voice-ai/
 ├── backend/          # Express server (API + ephemeral token + transcripts)
 │   ├── src/server.ts
@@ -28,51 +28,51 @@ voice-ai/
 │   ├── .env.example
 │   └── package.json
 └── README.md
-\`\`\`
+```
 
 ---
 
 ## ⚙️ Setup Instructions
 
 ### 1️⃣ Clone the repo
-\`\`\`bash
+```bash
 git clone https://github.com/TamerAlaeddin/voice-ai-receptionist.git
 cd voice-ai-receptionist
-\`\`\`
+```
 
 ### 2️⃣ Install dependencies
-\`\`\`bash
+```bash
 cd backend && npm install
 cd ../frontend && npm install
-\`\`\`
+```
 
 ### 3️⃣ Add your .env files
-Create \`backend/.env\` (never commit this file):
-\`\`\`env
+Create `backend/.env` (never commit this file):
+```env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3001
-\`\`\`
+```
 
-Create \`frontend/.env\`:
-\`\`\`env
+Create `frontend/.env`:
+```env
 VITE_API_URL=http://localhost:3001
-\`\`\`
+```
 
 ---
 
 ## ▶️ Run locally
 
 ### Backend
-\`\`\`bash
+```bash
 cd backend
 npm run dev
-\`\`\`
+```
 
 ### Frontend
-\`\`\`bash
+```bash
 cd ../frontend
 npm run dev
-\`\`\`
+```
 
 Then open:  
 👉 [http://localhost:5173](http://localhost:5173)
@@ -81,9 +81,9 @@ Then open:
 
 ## 📝 Transcripts
 Saved conversations appear under:
-\`\`\`
+```
 backend/transcripts/
-\`\`\`
+```
 
 Each session is timestamped and saved automatically when stopped.
 
