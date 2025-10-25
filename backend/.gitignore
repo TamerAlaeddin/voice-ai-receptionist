@@ -1,0 +1,18 @@
+# Environment
+.env
+backend/.env
+frontend/.env
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+dist
+build
+
+# Vite / React
+.vite
+coverage
+
+# macOS
+.DS_Store
