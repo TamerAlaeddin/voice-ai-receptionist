@@ -5,7 +5,7 @@
   "main": "src/server.ts",
   "type": "module",
   "scripts": {
-    "dev": "ts-node src/server.ts",
+    "dev": "tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
@@ -27,7 +27,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.4",
     "@types/node": "^20.14.9",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.4.5"
   }
 }
