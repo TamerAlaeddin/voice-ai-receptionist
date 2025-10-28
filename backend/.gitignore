@@ -1,18 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+
 # Environment
 .env
-backend/.env
-frontend/.env
+.env.local
 
-# Node
-node_modules
-npm-debug.log
-yarn-error.log
-dist
-build
+# Transcripts
+transcripts/*.txt
+transcripts/*.mp3
 
-# Vite / React
-.vite
-coverage
-
-# macOS
-.DS_Store
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
