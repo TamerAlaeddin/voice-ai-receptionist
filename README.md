@@ -1,46 +1,84 @@
-# 🎙️ Voice AI Receptionist
+# 🎙️ Voice AI Receptionist with LiveKit
 
-A full-stack AI voice receptionist built with **OpenAI Realtime API**, **Python (FastAPI)**, and **Next.js + TypeScript** frontend.  
-It listens, speaks, and saves conversation transcripts — just like a real receptionist.
+A production-ready AI voice receptionist built with **LiveKit Agents**, **Python (FastAPI)**, and **Next.js + TypeScript**.
+Features an STT-LLM-TTS pipeline with enhanced audio quality, noise cancellation, and telephony support.
 
 ---
 
 ## 🚀 Features
-- 🎧 Live two-way voice with GPT-4o-realtime
-- 💬 Natural speech transcription and AI responses
-- 🗂️ Transcript auto-saving to `/backend/transcripts`
-- 🔒 Secure ephemeral token generation (no API key leaks)
-- 🌍 English by default (auto-switches if caller requests another language)
+
+- 🎧 **High-quality voice pipeline** using AssemblyAI + GPT-4 + Cartesia
+- 🔊 **Enhanced noise cancellation** for crystal-clear audio
+- 💬 **Natural conversation** with intelligent turn detection
+- 🗂️ **Auto-saved transcripts** to `/backend/transcripts`
+- 📞 **Telephony ready** - easy SIP/PSTN integration via LiveKit
+- 🔒 **Secure tokens** - no API key exposure to frontend
+- 📈 **Production scalable** with LiveKit Cloud infrastructure
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐         ┌──────────────┐         ┌──────────────┐
+│   Browser   │◄───────►│   Backend    │◄───────►│  LiveKit     │
+│  (Next.js)  │  HTTP   │   (FastAPI)  │  Token  │   Cloud      │
+└─────────────┘         └──────────────┘         └──────────────┘
+       │                                                  │
+       │              WebRTC Audio & Transcriptions      │
+       └──────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+                        ┌──────────────┐
+                        │  LiveKit     │
+                        │   Agent      │
+                        │  (Python)    │
+                        └──────────────┘
+                                 │
+                    ┌────────────┼────────────┐
+                    ▼            ▼            ▼
+               ┌────────┐  ┌─────────┐  ┌────────┐
+               │  STT   │  │   LLM   │  │  TTS   │
+               │Assembly│  │ GPT-4.1 │  │Cartesia│
+               └────────┘  └─────────┘  └────────┘
+```
 
 ---
 
 ## 🧩 Project Structure
+
 ```
 voice-ai-receptionist/
-├── backend/          # FastAPI server (API + ephemeral token + transcripts)
+├── backend/              # Python backend
 │   ├── app/
-│   │   ├── main.py
-│   │   └── config.py
-│   ├── transcripts/
-│   ├── pyproject.toml
-│   └── uv.lock
-├── frontend/         # Next.js + TypeScript web UI (voice interface)
+│   │   ├── main.py       # FastAPI server (token generation, transcripts)
+│   │   └── config.py     # Business context and configuration
+│   ├── agent.py          # LiveKit voice agent (STT-LLM-TTS pipeline)
+│   ├── start_agent.sh    # Helper script to start agent
+│   ├── transcripts/      # Saved conversation logs
+│   ├── pyproject.toml    # Python dependencies
+│   └── .env             # Environment variables (create this)
+├── frontend/             # Next.js frontend
 │   ├── app/
-│   ├── components/
-│   ├── package.json
-│   └── next.config.ts
-└── README.md
+│   │   └── page.tsx      # Main UI
+│   ├── lib/
+│   │   └── livekit-receptionist-client.ts  # LiveKit client
+│   ├── components/       # UI components
+│   └── package.json
+├── README.md
+└── LIVEKIT_SETUP.md     # Detailed setup guide
 ```
 
 ---
 
 ## ⚙️ Setup Instructions
 
-### 1️⃣ Clone the repo
-```bash
-git clone https://github.com/TamerAlaeddin/voice-ai-receptionist.git
-cd voice-ai-receptionist
-```
+### 1️⃣ Prerequisites
+
+1. **Python 3.13+** - [Download](https://www.python.org/downloads/)
+2. **Node.js 20+** - [Download](https://nodejs.org/)
+3. **LiveKit Cloud Account** - [Sign up](https://cloud.livekit.io) (free tier available)
+4. **OpenAI API Key** - [Get key](https://platform.openai.com/api-keys)
 
 ### 2️⃣ Install uv (Python package manager)
 
@@ -54,103 +92,215 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-**Or with pip:**
+### 3️⃣ Clone and Install Dependencies
+
 ```bash
-pip install uv
-```
+# Clone the repo
+git clone https://github.com/TamerAlaeddin/voice-ai-receptionist.git
+cd voice-ai-receptionist
 
-For more installation options, visit: https://github.com/astral-sh/uv
-
-### 3️⃣ Install dependencies
-
-**Backend (Python with uv):**
-```bash
+# Install backend dependencies
 cd backend
 uv sync
-```
 
-This will:
-- Create a virtual environment automatically
-- Install all dependencies from `pyproject.toml`
-- Use Python >=3.13 (uv will handle this if available)
+# Download AI model files (VAD, turn detection, noise cancellation)
+uv run python agent.py download-files
 
-**Frontend (Node.js):**
-```bash
+# Install frontend dependencies
 cd ../frontend
 npm install
 ```
 
-### 4️⃣ Add your .env files
+### 4️⃣ Configure Environment Variables
 
-Create `backend/.env` (never commit this file):
+Create `backend/.env`:
+
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
+# LiveKit Cloud (get from https://cloud.livekit.io)
+LIVEKIT_API_KEY=your_livekit_api_key
+LIVEKIT_API_SECRET=your_livekit_api_secret
+LIVEKIT_URL=wss://your-project.livekit.cloud
+
+# OpenAI (used by GPT-4 in the pipeline)
+OPENAI_API_KEY=your_openai_api_key
+
+# Server
 PORT=3001
+BUSINESS_PHONE=(555) 123-4567
 ```
 
-**Note:** The frontend doesn't require a `.env` file as it uses the API URL from `lib/receptionist-client.ts`.
+See `.env.example` for reference.
 
 ---
 
-## ▶️ Run locally
+## ▶️ Run Locally
 
-### Backend
+You need **3 terminal windows** running simultaneously:
 
-Using `uv run` (recommended):
+### Terminal 1 - LiveKit Agent
+```bash
+cd backend
+./start_agent.sh
+```
+Wait for: `✅ registered worker`
+
+### Terminal 2 - Backend API
 ```bash
 cd backend
 uv run python -m app.main
 ```
+Wait for: `🚀 Server running on http://localhost:3001`
 
-Or using `uv` to run uvicorn directly:
-```bash
-cd backend
-uv run uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload
-```
-
-The server will start on `http://localhost:3001` (or the PORT from `.env`)
-
-### Frontend
+### Terminal 3 - Frontend
 ```bash
 cd frontend
 npm run dev
 ```
+Wait for: `✓ Ready in ...`
 
-Then open:  
-👉 [http://localhost:3000](http://localhost:3000) (Next.js default port)
+### Test It!
 
----
-
-## 📝 Transcripts
-Saved conversations appear under:
-```
-backend/transcripts/
-```
-
-Each session is timestamped and saved automatically when stopped.
+1. Open **http://localhost:3000** in your browser
+2. Click **"Start Call"**
+3. Allow microphone access
+4. The receptionist will greet you - start speaking!
+5. Click **"End Call"** when finished
+6. Check `backend/transcripts/` for saved conversation
 
 ---
 
-## ⚠️ Security
-- `.env` and dependency directories (`node_modules`, `.venv`, `__pycache__`) are ignored by `.gitignore`  
-- The server issues ephemeral tokens, never exposing your OpenAI API key  
-- Always revoke any previously leaked keys immediately  
+## 🎯 Voice Pipeline
+
+| Component | Provider | Model | Purpose |
+|-----------|----------|-------|---------|
+| **STT** | AssemblyAI | Universal-Streaming | Real-time speech recognition |
+| **LLM** | OpenAI | GPT-4.1 mini | Natural language understanding |
+| **TTS** | Cartesia | Sonic-3 | Natural voice synthesis |
+| **VAD** | Silero | - | Voice activity detection |
+| **Turn Detection** | LiveKit | Multilingual | Conversation flow |
+| **Noise Cancellation** | LiveKit | BVC | Audio enhancement |
+
+---
+
+## 📝 API Endpoints
+
+- `POST /token` - Generate LiveKit access token for client
+- `POST /save-transcript` - Save conversation transcript
+- `GET /transcripts` - List all saved transcripts
+- `GET /health` - Health check
+
+---
+
+## 🔧 Customization
+
+### Change AI Models
+
+Edit `backend/agent.py`:
+
+```python
+session = AgentSession(
+    stt="assemblyai/universal-streaming:en",  # Change STT
+    llm="openai/gpt-4.1-mini",                # Change LLM
+    tts="cartesia/sonic-3:...",               # Change TTS
+    ...
+)
+```
+
+### Update Business Context
+
+Edit `backend/app/config.py`:
+
+```python
+BUSINESS_CONTEXT = {
+    "name": "Your Business Name",
+    "services": ["service1", "service2"],
+    ...
+}
+```
+
+### Modify Instructions
+
+Edit the `RECEPTIONIST_INSTRUCTIONS` in `backend/app/config.py` to change how the AI behaves.
+
+---
+
+## 🚀 Deploy to Production
+
+Deploy the agent to LiveKit Cloud:
+
+```bash
+cd backend
+lk agent create
+```
+
+See [LIVEKIT_SETUP.md](./LIVEKIT_SETUP.md) for detailed deployment instructions.
 
 ---
 
 ## 🛠️ Development
 
-### Backend Development with uv
+### Backend (uv commands)
+- `uv sync` - Install/sync dependencies
+- `uv add package-name` - Add dependency
+- `uv remove package-name` - Remove dependency
+- `uv run python -m app.main` - Run backend server
 
-- **Sync dependencies:** `uv sync`
-- **Add a dependency:** `uv add package-name`
-- **Remove a dependency:** `uv remove package-name`
-- **Run commands in the project environment:** `uv run <command>`
-- **Update dependencies:** `uv lock --upgrade`
+### Frontend (npm commands)
+- `npm install` - Install dependencies
+- `npm run dev` - Development server
+- `npm run build` - Production build
 
-The virtual environment is automatically managed by `uv` in `.venv` (ignored by git).
+---
 
-## 🧠 Future Improvements
-- Add authentication for multi-agent sessions  
-- Integrate Twilio or SIP routing  
-- Add transcript dashboard with playback  
+## 🐛 Troubleshooting
+
+### Agent won't connect
+- Run: `python3 -m pip install --upgrade certifi` (fixes SSL issues on macOS)
+- Use `./start_agent.sh` instead of `uv run python agent.py dev`
+
+### No audio
+- Check microphone permissions in browser
+- Verify LiveKit Cloud project is active
+- Check agent logs for errors
+
+### Port already in use
+- Kill existing processes: `lsof -ti:3001 | xargs kill -9`
+
+See [LIVEKIT_SETUP.md](./LIVEKIT_SETUP.md) for more troubleshooting.
+
+---
+
+## 📚 Documentation
+
+- [LiveKit Agents](https://docs.livekit.io/agents/)
+- [Voice AI Quickstart](https://docs.livekit.io/agents/quickstart/)
+- [Building Voice Agents](https://docs.livekit.io/agents/building/)
+
+---
+
+## 🎯 Next Steps
+
+- ✅ Basic voice receptionist working
+- 📞 Add telephony via LiveKit SIP
+- 📊 Build transcript dashboard
+- 🔧 Add function calling for booking/scheduling
+- 💾 Implement conversation memory/RAG
+- 🌍 Multi-language support
+
+---
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 🙏 Credits
+
+Built with:
+- [LiveKit](https://livekit.io) - Real-time voice infrastructure
+- [OpenAI](https://openai.com) - GPT-4 language model
+- [AssemblyAI](https://assemblyai.com) - Speech-to-text
+- [Cartesia](https://cartesia.ai) - Text-to-speech
+- [FastAPI](https://fastapi.tiangolo.com) - Backend framework
+- [Next.js](https://nextjs.org) - Frontend framework

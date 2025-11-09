@@ -1,16 +1,19 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
-import httpx
+"""FastAPI backend for the AI voice receptionist system."""
+from datetime import datetime
 import json
 from pathlib import Path
-from datetime import datetime
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from livekit import api
+from pydantic import BaseModel
 
 from .config import (
-    OPENAI_API_KEY,
+    LIVEKIT_API_KEY,
+    LIVEKIT_API_SECRET,
+    LIVEKIT_URL,
     BUSINESS_CONTEXT,
-    RECEPTIONIST_INSTRUCTIONS,
     PORT
 )
 
@@ -58,53 +61,36 @@ async def health_check():
     }
 
 
-@app.post("/ephemeral-token")
-async def create_ephemeral_token():
-    """Generate ephemeral token for OpenAI Realtime API"""
+@app.post("/token")
+async def create_token():
+    """Generate LiveKit access token for client"""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                "https://api.openai.com/v1/realtime/sessions",
-                headers={
-                    "Authorization": f"Bearer {OPENAI_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": "gpt-4o-mini-realtime-preview",
-                    "voice": "alloy",
-                    "instructions": RECEPTIONIST_INSTRUCTIONS,
-                    "temperature": 0.8,
-                    "max_response_output_tokens": 150,
-                },
-                timeout=30.0
+        if not LIVEKIT_API_KEY or not LIVEKIT_API_SECRET:
+            raise HTTPException(
+                status_code=500,
+                detail="LiveKit credentials not configured"
             )
-            
-            if response.status_code != 200:
-                error_data = response.json()
-                error_message = error_data.get("error", {}).get("message", "Failed to create session")
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=error_message
-                )
-            
-            data = response.json()
-            
-            if not data.get("client_secret", {}).get("value"):
-                raise HTTPException(
-                    status_code=500,
-                    detail="Missing client secret in response"
-                )
-            
-            return {
-                "client_secret": data["client_secret"]["value"],
-                "expires_at": data.get("expires_at")
-            }
-            
-    except httpx.RequestError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Request failed: {str(e)}"
+
+        # Generate a unique room name for this session
+        room_name = f"receptionist-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+        # Generate access token
+        token = api.AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET)
+        token.with_identity("user")
+        token.with_name("Caller")
+        token.with_grants(
+            api.VideoGrants(
+                room_join=True,
+                room=room_name,
+            )
         )
+
+        return {
+            "token": token.to_jwt(),
+            "url": LIVEKIT_URL,
+            "room": room_name
+        }
+
     except HTTPException:
         raise
     except Exception as e:

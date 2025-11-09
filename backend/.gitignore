@@ -9,6 +9,7 @@ env/
 ENV/
 *.egg-info/
 .venv/
+uv.lock
 
 # Environment
 .env
@@ -18,8 +19,16 @@ ENV/
 transcripts/*.txt
 transcripts/*.mp3
 
+# Logs and temp dirs
+KMS/
+logs/
+*.log
+
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# macOS
+.DS_Store
